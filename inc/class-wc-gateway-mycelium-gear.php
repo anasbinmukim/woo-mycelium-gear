@@ -124,10 +124,10 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
     /**
      * Output for the order received page.
      */
-	public function thankyou_page() {
-		if ( $this->instructions )
-        	echo wpautop( wptexturize( $this->instructions ) );
-	}
+		public function thankyou_page() {
+			if ( $this->instructions )
+	        	echo wpautop( wptexturize( $this->instructions ) );
+		}
 
     /**
      * Add content to the WC emails.
@@ -143,37 +143,74 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 			}
 		}
 
+		/**
+     * Add Mycelium Payment button
+     *
+     * @param int $order_id
+     * @return array
+     */
+		public function payment_fields(){
+			$paynow_text =  __( 'Pay using mycelium account.', 'woo-mycelium-gear' );
+			echo '<div class="mycellium_pay_box">';
+			echo $paynow_text;
+
+			echo '</div>';
+		}
+
     /**
      * Process the payment and return the result
      *
      * @param int $order_id
      * @return array
      */
-	public function process_payment( $order_id ) {
+		public function process_payment( $order_id ) {
 
-		$order = wc_get_order( $order_id );
+			$order = wc_get_order( $order_id );
 
-		$order_id    = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->id          : $order->get_id();
-		$userID      = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->user_id     : $order->get_user_id();
-		$order_total = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->order_total : $order->get_total();
+			$order_id    = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->id          : $order->get_id();
+			$userID      = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->user_id     : $order->get_user_id();
+			$order_total = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->order_total : $order->get_total();
 
 
-		//update_post_meta( $order_id, '_invoice_me', 'yes' );
-		//update_post_meta( $order_id, '_invoice_me_status', 'pending' );
+			//update_post_meta( $order_id, '_invoice_me', 'yes' );
+			//update_post_meta( $order_id, '_invoice_me_status', 'pending' );
 
-		// Mark as on-hold (we're awaiting shop manager approval)
-		$order->update_status( $this->default_order_status, __( 'Awaiting Mycelium Payment', 'woo-mycelium-gear' ) );
+			$gateway_id = 'b629c1ca7ca18492b6a3b50390fe4c6a334eefdde78dfc5f7c70c4a83cf47f7b';
+			$gateway_secret = '5fqf7hSiqdYAqbcxExBD6VagJc8ZjjASL1Aa4b83nsUDY9PhpcaXCDFMW3hgRvqb';
 
-		// Reduce stock levels
-		$order->reduce_order_stock();
+			$callback_data = 'heloback';
 
-		// Remove cart
-		WC()->cart->empty_cart();
+			$mycelium_gear = new WC_Mycelium_Gear_API($gateway_id, $gateway_secret);
+			$mycelium_order = $mycelium_gear->create_order($order_total, $order_id, $callback_data);
+			//$order = $geary->check_order($payment_id);
 
-		// Return thankyou redirect
-		return array(
-			'result' 	=> 'success',
-			'redirect'	=> $this->get_return_url( $order )
-		);
-	}
+			if ($mycelium_order->payment_id) {
+				// Mark as on-hold (we're awaiting shop manager approval)
+				$order->update_status( $this->default_order_status, __( 'Awaiting Mycelium Payment', 'woo-mycelium-gear' ) );
+
+				// Reduce stock levels
+				$order->reduce_order_stock();
+
+				// Remove cart
+				WC()->cart->empty_cart();
+
+				//track order gear payment id
+				update_post_meta( $order_id, '_mygear_order_id', $mycelium_order->payment_id );
+
+		    $redirect_to_payment_url = "https://gateway.gear.mycelium.com/pay/{$mycelium_order->payment_id}";
+
+				// Return thankyou redirect
+				return array(
+					'result' 	=> 'success',
+					'redirect'	=> $redirect_to_payment_url
+				);
+			}else{
+				// Return thankyou redirect
+				return array(
+					'result' 	=> 'error',
+					'redirect'	=> $this->get_return_url( $order )
+				);
+			}
+
+		}
 }
