@@ -17,7 +17,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
    */
 	public function __construct() {
 		$this->id                 = 'myceliumgear';
-		$this->icon               = apply_filters('woocommerce_myceliumgear_icon', '');
+		$this->icon               = apply_filters( 'woo_mygear_logo', plugins_url( 'images/mycelium.png', dirname( __FILE__ ) ) );
 		$this->has_fields         = true;
 		$this->method_title       = __( 'Mycelium Gear', 'woo-mycelium-gear' );
 		$this->method_description = __( 'Mycelium Gear sends customers to Mycelium Gear to complete payment from checkout page.', 'woo-mycelium-gear' );
@@ -134,6 +134,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 	        	echo wpautop( wptexturize( $this->instructions ) );
 		}
 
+
     /**
      * Add content to the WC emails.
      *
@@ -155,11 +156,20 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
      * @return array
      */
 		public function payment_fields(){
-			$paynow_text =  __( 'Pay using mycelium account.', 'woo-mycelium-gear' );
-			echo '<div class="mycellium_pay_box">';
-			echo $paynow_text;
-
-			echo '</div>';
+			if ( $this->description )
+						echo wpautop( wptexturize( $this->description ) );
+			?>
+			<script type="text/javascript">
+					jQuery(document).ready(function($) {
+						jQuery('.wc_payment_methods input[name="payment_method"]').change(function(){
+								var current_button_text = jQuery('.woocommerce-checkout-payment #place_order').val();
+				        if(jQuery('#payment_method_myceliumgear').prop('checked')){
+										jQuery(".woocommerce-checkout-payment #place_order").val("Proceed To Mycelium Gear");
+				        }
+				    });
+					});
+			</script>
+			<?php
 		}
 
 		/**
