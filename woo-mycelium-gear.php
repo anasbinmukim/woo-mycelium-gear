@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WooCommerce Mycelium Gear
-Plugin URI: http://rmweblab.com/
+Plugin URI: http://plugins.rmweblab.com/
 Description: WooCommerce Mycelium Gear Payment Gateway Extends WooCommerce Payment Gateway allow customer to pay using mycelium gear.
 Author: Anas
 Version: 1.0
@@ -42,6 +42,10 @@ class WC_MyceliumGear {
 		add_action( 'woocommerce_order_status_on-hold_to_completed', array( $this, 'capture_order' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_cancelled', array( $this, 'cancel_order' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_refunded', array( $this, 'cancel_order' ) );
+
+		//Process when payment complete of done.
+		add_action( 'wp', array( $this, 'process_mycelium_order_init' ) );
+
 	}
 
 	/**
@@ -53,7 +57,7 @@ class WC_MyceliumGear {
 		$plugin_links = array(
 			'<a href="' . admin_url( 'admin.php?page=wc-settings&tab=checkout&section=myceliumgear' ) . '">' . __( 'Settings', 'woo-mycelium-gear' ) . '</a>',
 			'<a href="http://rmweblab.com/support">' . __( 'Support', 'woo-mycelium-gear' ) . '</a>',
-			'<a href="http://woocommerce.rmweblab.com/woocommerce-mycelium-gear">' . __( 'Docs', 'woo-mycelium-gear' ) . '</a>',
+			'<a href="http://plugins.rmweblab.com/woocommerce-mycelium-gear">' . __( 'Docs', 'woo-mycelium-gear' ) . '</a>',
 		);
 		return array_merge( $plugin_links, $links );
 	}
@@ -70,9 +74,6 @@ class WC_MyceliumGear {
 		require_once( 'inc/class-wc-mycelium-gear-api.php' );
 
 		// Includes
-		require_once( 'inc/gateway-mycelium-settings.php' );
-
-		// Includes
 		require_once( 'inc/class-wc-gateway-mycelium-gear.php' );
 
 		// Localisation
@@ -80,7 +81,15 @@ class WC_MyceliumGear {
 	}
 
 
-
+	/**
+	 * Process call back result after mycellium payment webhook
+	 *
+	 * @return void
+	 */
+	function process_mycelium_order_init(){
+		$mycelium_gateway = new WC_Gateway_MyceliumGear();
+		$mycelium_gateway->process_mycelium_order();
+	}
 
 	/**
 	 * Register the gateway for use
@@ -99,15 +108,8 @@ class WC_MyceliumGear {
 	 */
 	public function capture_order( $order_id ) {
 		$order = new WC_Order( $order_id );
-
 		if ( $order->payment_method == 'myceliumgear' ) {
-
-			//Sent Invoice to customer
-			//date_default_timezone_set("UTC");
-			//update_post_meta( $order_id, '_invoice_me_status', 'sent' );
-			//$date_time = date("Y-m-d H:i:s");
-			//update_post_meta( $order_id, '_invoice_me_date', $date_time );
-
+				//Used for custom order data
 		}
 	}
 
@@ -118,16 +120,8 @@ class WC_MyceliumGear {
 	 */
 	public function cancel_order( $order_id ) {
 		$order = new WC_Order( $order_id );
-
 		if ( $order->payment_method == 'myceliumgear' ) {
-
-			//if(get_post_meta( $order_id, '_invoice_me', true )){
-
-				//clean up invoice me meta value for this order.
-				//delete_post_meta($order_id, '_invoice_me_status', 'pending');
-				//delete_post_meta($order_id, '_invoice_me', 'yes');
-			//}
-
+				//Use when cancel order
 		}
 
 	}

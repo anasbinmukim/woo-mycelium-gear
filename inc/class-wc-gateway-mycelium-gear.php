@@ -20,7 +20,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 		$this->icon               = apply_filters('woocommerce_myceliumgear_icon', '');
 		$this->has_fields         = true;
 		$this->method_title       = __( 'Mycelium Gear', 'woo-mycelium-gear' );
-		$this->method_description = __( 'Mycelium Gear sends customers to Mycelium Gear to enter their payment information from checkout page.', 'woo-mycelium-gear' );
+		$this->method_description = __( 'Mycelium Gear sends customers to Mycelium Gear to complete payment from checkout page.', 'woo-mycelium-gear' );
 
 		// Load the settings.
 		$this->init_form_fields();
@@ -32,6 +32,10 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 		$this->instructions = $this->get_option( 'instructions', $this->description );
 		$this->default_order_status  = $this->get_option( 'default_order_status' );
 
+		//Gateway API credentials
+		$this->gateway_id  = $this->get_option( 'gateway_id' );
+		$this->gateway_secret  = $this->get_option( 'gateway_secret' );
+
 
 		// Actions
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -40,6 +44,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 
 		// Customer Emails
 		add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 3 );
+
   }
 
     /**
@@ -157,6 +162,43 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 			echo '</div>';
 		}
 
+		/**
+     * Process call back result after mycellium payment
+     *
+     * @return void
+     */
+		public function process_mycelium_order(){
+			global $woocommerce;
+			$woo_order_id = '';
+			$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
+			$mycelium_check_order = $mycelium_gear->check_order_callback();
+			if ($mycelium_check_order !== FALSE) {
+				//If full paid
+				if(isset($mycelium_check_order['status']) && ($mycelium_check_order['status'] == 2)){
+						$gear_order_id = $mycelium_check_order['order_id'];
+						$gear_callback = $mycelium_check_order['callback_data'];
+						//if callback have data
+						if($gear_callback != ''){
+								$gear_callback_ar = explode('_', $gear_callback);
+								if(isset($gear_callback_ar[1])){
+									$woo_order_id = $gear_callback_ar[1];
+								}
+						}
+
+						//If call back order ID and database store ID same
+						if(($woo_order_id !== '')){
+							$woo_order = new WC_Order( $woo_order_id );
+							if($woo_order->payment_complete()){
+									$woo_order->add_order_note( __('Mycelium gear payment completed', 'woo-mycelium-gear') );
+							}
+						}
+				}
+			}
+
+			///echo 'Yes, I am alive...';
+
+		}
+
     /**
      * Process the payment and return the result
      *
@@ -171,16 +213,10 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 			$userID      = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->user_id     : $order->get_user_id();
 			$order_total = (true === version_compare(WOOCOMMERCE_VERSION, '3.0', '<')) ? $order->order_total : $order->get_total();
 
+			//woocommerce store order id
+			$callback_data = 'wooorderid_'.$order_id;
 
-			//update_post_meta( $order_id, '_invoice_me', 'yes' );
-			//update_post_meta( $order_id, '_invoice_me_status', 'pending' );
-
-			$gateway_id = 'b629c1ca7ca18492b6a3b50390fe4c6a334eefdde78dfc5f7c70c4a83cf47f7b';
-			$gateway_secret = '5fqf7hSiqdYAqbcxExBD6VagJc8ZjjASL1Aa4b83nsUDY9PhpcaXCDFMW3hgRvqb';
-
-			$callback_data = 'heloback';
-
-			$mycelium_gear = new WC_Mycelium_Gear_API($gateway_id, $gateway_secret);
+			$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
 			$mycelium_order = $mycelium_gear->create_order($order_total, $order_id, $callback_data);
 			//$order = $geary->check_order($payment_id);
 
@@ -195,7 +231,8 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 				WC()->cart->empty_cart();
 
 				//track order gear payment id
-				update_post_meta( $order_id, '_mygear_order_id', $mycelium_order->payment_id );
+				update_post_meta( $order_id, '_mygear_order_id', $mycelium_order->id );
+				update_post_meta( $order_id, '_mygear_address', $mycelium_order->address );
 
 		    $redirect_to_payment_url = "https://gateway.gear.mycelium.com/pay/{$mycelium_order->payment_id}";
 
