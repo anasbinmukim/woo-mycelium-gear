@@ -47,6 +47,9 @@ class WC_MyceliumGear {
 		add_action( 'woocommerce_order_status_pending_to_cancelled', array( $this, 'cancel_order' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_refunded', array( $this, 'cancel_order' ) );
 
+		//Update payment URL for
+		add_filter( 'woocommerce_get_checkout_payment_url', array( &$this, 'get_checkout_gear_payment_url' ), 10, 2 );
+
 	}
 
 	/**
@@ -81,6 +84,14 @@ class WC_MyceliumGear {
 		load_plugin_textdomain( 'woo-mycelium-gear', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 	}
 
+	/**
+	 * Add flag to payment url for failed/ pending switch orders.
+	 *
+	 * @since 2.1
+	 */
+	public function get_checkout_gear_payment_url( $pay_url, $order ) {
+		return $pay_url;
+	}
 
 	/**
 	 * Process call back result after mycellium payment webhook

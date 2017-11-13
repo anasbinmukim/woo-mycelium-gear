@@ -159,6 +159,16 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 		public function payment_fields(){
 			if ( $this->description )
 						echo wpautop( wptexturize( $this->description ) );
+
+			if(is_wc_endpoint_url( 'order-pay' )){
+				global $wp;
+				$order_id = $wp->query_vars['order-pay'];
+				$mygear_payment_id = get_post_meta( $order_id, '_mygear_payment_id', TRUE );
+				if($mygear_payment_id){
+					$payment_url = "https://gateway.gear.mycelium.com/pay/{$mygear_payment_id}";
+					echo sprintf( '<div class="link_pay_mycelium">' . __( 'Mycelium Order Already Created. Please pay directly here. <br /> <a href="%s" class="button pay_now" target="_blank">Pay Now</a>.', 'woo-mycelium-gear' ) . '</div>', esc_url( $payment_url ) );
+				}
+			}
 			?>
 			<script type="text/javascript">
 					jQuery(document).ready(function($) {
