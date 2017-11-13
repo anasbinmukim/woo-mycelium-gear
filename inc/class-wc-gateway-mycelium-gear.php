@@ -97,6 +97,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 				'default'     => 'sale',
 				'desc_tip'    => true,
 				'options'     => array(
+					'pending'          => __( 'Pending payment', 'woo-mycelium-gear' ),
 					'on-hold'          => __( 'On Hold', 'woo-mycelium-gear' ),
 					'processing' => __( 'Processing', 'woo-mycelium-gear' ),
 					'completed' => __( 'Completed', 'woo-mycelium-gear' )
@@ -173,6 +174,17 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 		}
 
 		/**
+		 * Mycellium cancel order
+		 *
+		 * @return void
+		 */
+		public function mycelium_order_cancel($gear_order_id){
+			$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
+			$mycelium_cancel_order = $mycelium_gear->cancel_order($gear_order_id);
+
+		}
+
+		/**
      * Process call back result after mycellium payment
      *
      * @return void
@@ -184,7 +196,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 			$mycelium_check_order = $mycelium_gear->check_order_callback();
 			if ($mycelium_check_order !== FALSE) {
 				//If full paid
-				if(isset($mycelium_check_order['status']) && ($mycelium_check_order['status'] == 2)){
+				if(isset($mycelium_check_order['status'])){
 						$gear_order_id = $mycelium_check_order['order_id'];
 						$gear_callback = $mycelium_check_order['callback_data'];
 						//if callback have data
@@ -195,14 +207,31 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 								}
 						}
 
-						//If call back order ID and database store ID same
-						if(($woo_order_id !== '')){
+						//If call back order ID and woo order id and full paid
+						if(($woo_order_id !== '') && ($mycelium_check_order['status'] == 2)){
 							$woo_order = new WC_Order( $woo_order_id );
 							if($woo_order->payment_complete()){
 									$woo_order->add_order_note( __('Mycelium gear payment completed', 'woo-mycelium-gear') );
 							}
 						}
-				}
+
+						//If call back order ID and woo order id and order cancelled
+						if(($woo_order_id !== '') && ($mycelium_check_order['status'] == 6)){
+							$woo_order = new WC_Order( $woo_order_id );
+
+							$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
+							$mycelium_order = $mycelium_gear->cancel_order($gear_order_id);
+							//$new_status = 'wc-on-hold';
+							//$note = __('Mycelium gear payment was canceled.', 'woo-mycelium-gear');
+							//$woo_order->update_status( $new_status, $note);
+							$woo_order->add_order_note( __('Mycelium gear payment was canceled.', 'woo-mycelium-gear') );
+						}
+
+
+				}//if have order status
+
+
+
 			}
 
 			///echo 'Yes, I am alive...';
@@ -226,13 +255,15 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 			//woocommerce store order id
 			$callback_data = 'wooorderid_'.$order_id;
 
+			$gear_order_id = $order_id + time();
+
 			$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
-			$mycelium_order = $mycelium_gear->create_order($order_total, $order_id, $callback_data);
+			$mycelium_order = $mycelium_gear->create_order($order_total, $gear_order_id, $callback_data);
 			//$order = $geary->check_order($payment_id);
 
 			if ($mycelium_order->payment_id) {
 				// Mark as on-hold (we're awaiting shop manager approval)
-				$order->update_status( $this->default_order_status, __( 'Awaiting Mycelium Payment', 'woo-mycelium-gear' ) );
+				$order->update_status( $this->default_order_status, __( 'Pending Mycelium Payment', 'woo-mycelium-gear' ) );
 
 				// Reduce stock levels
 				$order->reduce_order_stock();
@@ -243,6 +274,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 				//track order gear payment id
 				update_post_meta( $order_id, '_mygear_order_id', $mycelium_order->id );
 				update_post_meta( $order_id, '_mygear_address', $mycelium_order->address );
+				update_post_meta( $order_id, '_mygear_payment_id', $mycelium_order->payment_id );
 
 		    $redirect_to_payment_url = "https://gateway.gear.mycelium.com/pay/{$mycelium_order->payment_id}";
 

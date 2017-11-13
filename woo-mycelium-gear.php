@@ -37,14 +37,15 @@ class WC_MyceliumGear {
 		// Actions
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ) );
 		add_action( 'plugins_loaded', array( $this, 'init' ), 0 );
+		//Process when payment complete of done.
+		add_action( 'wp', array( $this, 'process_mycelium_order_init' ) );
+
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_processing', array( $this, 'capture_order' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_completed', array( $this, 'capture_order' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_cancelled', array( $this, 'cancel_order' ) );
+		add_action( 'woocommerce_order_status_pending_to_cancelled', array( $this, 'cancel_order' ) );
 		add_action( 'woocommerce_order_status_on-hold_to_refunded', array( $this, 'cancel_order' ) );
-
-		//Process when payment complete of done.
-		add_action( 'wp', array( $this, 'process_mycelium_order_init' ) );
 
 	}
 
@@ -108,7 +109,7 @@ class WC_MyceliumGear {
 	 */
 	public function capture_order( $order_id ) {
 		$order = new WC_Order( $order_id );
-		if ( $order->payment_method == 'myceliumgear' ) {
+		if ( $order->get_payment_method() == 'myceliumgear' ) {
 				//Used for custom order data
 		}
 	}
@@ -117,11 +118,19 @@ class WC_MyceliumGear {
 	 * Cancel pre-auth on cancellation
 	 *
 	 * @param  int $order_id
+	 * @param  obj $order
 	 */
 	public function cancel_order( $order_id ) {
 		$order = new WC_Order( $order_id );
-		if ( $order->payment_method == 'myceliumgear' ) {
+		if ( $order->get_payment_method() == 'myceliumgear' ) {
 				//Use when cancel order
+				$mygear_order_id = get_post_meta( $order_id, '_mygear_order_id', TRUE );
+				$mygear_address = get_post_meta( $order_id, '_mygear_address', TRUE );
+				$mygear_payment_id = get_post_meta( $order_id, '_mygear_payment_id', TRUE );
+				if($mygear_order_id){
+					$mycelium_gateway = new WC_Gateway_MyceliumGear();
+					$mycelium_gateway->mycelium_order_cancel($mygear_order_id);
+				}
 		}
 
 	}
