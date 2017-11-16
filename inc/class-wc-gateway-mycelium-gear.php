@@ -94,7 +94,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 				'title'       => __( 'Order Status', 'woo-mycelium-gear' ),
 				'type'        => 'select',
 				'description' => __( 'Choose immediate order status at customer checkout.', 'woo-mycelium-gear' ),
-				'default'     => 'sale',
+				'default'     => 'pending',
 				'desc_tip'    => true,
 				'options'     => array(
 					'pending'          => __( 'Pending payment', 'woo-mycelium-gear' ),
