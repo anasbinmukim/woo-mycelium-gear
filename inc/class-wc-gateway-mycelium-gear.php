@@ -1,5 +1,4 @@
 <?php
-
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 /**
@@ -29,6 +28,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 		// Define user set variables
 		$this->title        = $this->get_option( 'title' );
 		$this->description  = $this->get_option( 'description' );
+		$this->order_button_text  = $this->get_option( 'btn_text_paynow' );
 		$this->instructions = $this->get_option( 'instructions', $this->description );
 		$this->default_order_status  = $this->get_option( 'default_order_status' );
 
@@ -52,79 +52,76 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
      */
     public function init_form_fields() {
 
-		$userroles  = array();
-
-		global $wp_roles;
-		$all_roles = $wp_roles->roles;
-		$editable_roles = apply_filters('editable_roles', $all_roles);
-		foreach ($editable_roles as $role_name => $role_info){
-			$userroles[ $role_name ] = $role_info['name'];
-		}
-
-
     	$this->form_fields = array(
-			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'woo-mycelium-gear' ),
-				'type'    => 'checkbox',
-				'label'   => __( 'Enable Mycelium Gear', 'woo-mycelium-gear' ),
-				'default' => 'yes'
-			),
-			'title' => array(
-				'title'       => __( 'Title', 'woo-mycelium-gear' ),
-				'type'        => 'text',
-				'description' => __( 'This controls the title which the user see during checkout.', 'woo-mycelium-gear' ),
-				'default'     => __( 'Mycelium Gear', 'woo-mycelium-gear' ),
-				'desc_tip'    => true,
-			),
-			'description' => array(
-				'title'       => __( 'Description', 'woo-mycelium-gear' ),
-				'type'        => 'textarea',
-				'description' => __( 'Payment method description that the customer will see on your checkout.', 'woo-mycelium-gear' ),
-				'default'     => __( 'You can proceed payment using Mycelium Gear Wallet.', 'woo-mycelium-gear' ),
-				'desc_tip'    => true,
-			),
-			'instructions' => array(
-				'title'       => __( 'Instructions', 'woo-mycelium-gear' ),
-				'type'        => 'textarea',
-				'description' => __( 'Instructions message that display on checkout confirmation page.', 'woo-mycelium-gear' ),
-				'default'     => __( 'Thank you for staying with us.', 'woo-mycelium-gear' ),
-				'desc_tip'    => true,
-			),
-			'default_order_status' => array(
-				'title'       => __( 'Order Status', 'woo-mycelium-gear' ),
-				'type'        => 'select',
-				'description' => __( 'Choose immediate order status at customer checkout.', 'woo-mycelium-gear' ),
-				'default'     => 'pending',
-				'desc_tip'    => true,
-				'options'     => array(
-					'pending'          => __( 'Pending payment', 'woo-mycelium-gear' ),
-					'on-hold'          => __( 'On Hold', 'woo-mycelium-gear' ),
-					'processing' => __( 'Processing', 'woo-mycelium-gear' ),
-					'completed' => __( 'Completed', 'woo-mycelium-gear' )
+				'enabled' => array(
+					'title'   => __( 'Enable/Disable', 'woo-mycelium-gear' ),
+					'type'    => 'checkbox',
+					'label'   => __( 'Enable Mycelium Gear', 'woo-mycelium-gear' ),
+					'default' => 'yes'
+				),
+				'title' => array(
+					'title'       => __( 'Title', 'woo-mycelium-gear' ),
+					'type'        => 'text',
+					'description' => __( 'This controls the title which the user see during checkout.', 'woo-mycelium-gear' ),
+					'default'     => __( 'Mycelium Gear', 'woo-mycelium-gear' ),
+					'desc_tip'    => true,
+				),
+				'description' => array(
+					'title'       => __( 'Description', 'woo-mycelium-gear' ),
+					'type'        => 'textarea',
+					'description' => __( 'Payment method description that the customer will see on your checkout.', 'woo-mycelium-gear' ),
+					'default'     => __( 'You can proceed payment using Mycelium Gear Wallet.', 'woo-mycelium-gear' ),
+					'desc_tip'    => true,
+				),
+				'btn_text_paynow' => array(
+					'title'       => __( 'Button Text', 'woo-mycelium-gear' ),
+					'type'        => 'text',
+					'description' => __( 'Place order button text', 'woo-mycelium-gear' ),
+					'default'     => __( 'Proceed To Mycelium', 'woo-mycelium-gear' ),
+					'desc_tip'    => true,
+				),
+				'instructions' => array(
+					'title'       => __( 'Instructions', 'woo-mycelium-gear' ),
+					'type'        => 'textarea',
+					'description' => __( 'Instructions message that display on checkout confirmation page.', 'woo-mycelium-gear' ),
+					'default'     => __( 'Thank you for staying with us.', 'woo-mycelium-gear' ),
+					'desc_tip'    => true,
+				),
+				'default_order_status' => array(
+					'title'       => __( 'Order Status', 'woo-mycelium-gear' ),
+					'type'        => 'select',
+					'description' => __( 'Choose immediate order status at customer checkout.', 'woo-mycelium-gear' ),
+					'default'     => 'pending',
+					'desc_tip'    => true,
+					'options'     => array(
+						'pending'          => __( 'Pending payment', 'woo-mycelium-gear' ),
+						'on-hold'          => __( 'On Hold', 'woo-mycelium-gear' ),
+						'processing' => __( 'Processing', 'woo-mycelium-gear' ),
+						'completed' => __( 'Completed', 'woo-mycelium-gear' )
+					)
+				),
+				'api_details' => array(
+					'title'       => __( 'API credentials', 'woo-mycelium-gear' ),
+					'type'        => 'title',
+					'description' => sprintf( __( 'Enter your Mycelium Gear API credentials to process payment. Learn how to access your <a target="_blank" href="%s">Mycelium Gear</a>.', 'woo-mycelium-gear' ), 'https://admin.gear.mycelium.com/gateways' ),
+				),
+				'gateway_id' => array(
+					'title'       => __( 'Gateway ID', 'woo-mycelium-gear' ),
+					'type'        => 'text',
+					'description' => __( 'Get your Gateway ID from Mycelium Gear.', 'woo-mycelium-gear' ),
+					'default'     => '',
+					'desc_tip'    => true,
+					'placeholder' => __( 'Required', 'woo-mycelium-gear' ),
+				),
+				'gateway_secret' => array(
+					'title'       => __( 'Gateway Secret', 'woo-mycelium-gear' ),
+					'type'        => 'text',
+					'description' => __( 'Get your Gateway Secret from Mycelium Gear.', 'woo-mycelium-gear' ),
+					'default'     => '',
+					'desc_tip'    => true,
+					'placeholder' => __( 'Required', 'woo-mycelium-gear' ),
 				)
-			),
-			'api_details' => array(
-				'title'       => __( 'API credentials', 'woo-mycelium-gear' ),
-				'type'        => 'title',
-				'description' => sprintf( __( 'Enter your Mycelium Gear API credentials to process payment. Learn how to access your <a target="_blank" href="%s">Mycelium Gear</a>.', 'woo-mycelium-gear' ), 'https://admin.gear.mycelium.com/gateways' ),
-			),
-			'gateway_id' => array(
-				'title'       => __( 'Gateway ID', 'woo-mycelium-gear' ),
-				'type'        => 'text',
-				'description' => __( 'Get your Gateway ID from Mycelium Gear.', 'woo-mycelium-gear' ),
-				'default'     => '',
-				'desc_tip'    => true,
-				'placeholder' => __( 'Required', 'woo-mycelium-gear' ),
-			),
-			'gateway_secret' => array(
-				'title'       => __( 'Gateway Secret', 'woo-mycelium-gear' ),
-				'type'        => 'text',
-				'description' => __( 'Get your Gateway Secret from Mycelium Gear.', 'woo-mycelium-gear' ),
-				'default'     => '',
-				'desc_tip'    => true,
-				'placeholder' => __( 'Required', 'woo-mycelium-gear' ),
-			)
-		);
+			);
     }
 
     /**
@@ -145,7 +142,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
      * @param bool $plain_text
      */
 		public function email_instructions( $order, $sent_to_admin, $plain_text = false ) {
-	    if ( $this->instructions && ! $sent_to_admin && 'myceliumgear' === $order->payment_method && $order->has_status( $this->default_order_status ) ) {
+	    if ( $this->instructions && ! $sent_to_admin && 'myceliumgear' === $order->get_payment_method() && $order->has_status( $this->default_order_status ) ) {
 				echo wpautop( wptexturize( $this->instructions ) ) . PHP_EOL;
 			}
 		}
@@ -164,34 +161,35 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 				global $wp;
 				$order_id = $wp->query_vars['order-pay'];
 				$mygear_payment_id = get_post_meta( $order_id, '_mygear_payment_id', TRUE );
-				if($mygear_payment_id){
-					$payment_url = "https://gateway.gear.mycelium.com/pay/{$mygear_payment_id}";
-					echo sprintf( '<div class="link_pay_mycelium">' . __( 'Mycelium Order Already Created. Please pay directly here. <br /> <a href="%s" class="button pay_now" target="_blank">Pay Now</a>.', 'woo-mycelium-gear' ) . '</div>', esc_url( $payment_url ) );
+					if($mygear_payment_id){
+						$payment_url = "https://gateway.gear.mycelium.com/pay/{$mygear_payment_id}";
+						echo sprintf( '<div class="btn_link_pay_using_mycelium">' . __( 'Mycelium Order Already Created. Please pay directly <a href="%s" class="button pay_now" target="_blank">here</a>.', 'woo-mycelium-gear' ) . '</div>', esc_url( $payment_url ) );
+						?>
+						<script type="text/javascript">
+								jQuery(document).ready(function($) {
+									//Hide place order button if product already created in mycelium
+									jQuery('.wc_payment_methods input[name="payment_method"]').change(function(){
+							        if(jQuery('#payment_method_myceliumgear').prop('checked')){
+													jQuery("#place_order").hide();
+							        }else{
+													jQuery("#place_order").show();
+											}
+							    });
+								});
+						</script>
+					<?php
 				}
-			}
-			?>
-			<script type="text/javascript">
-					jQuery(document).ready(function($) {
-						jQuery('.wc_payment_methods input[name="payment_method"]').change(function(){
-								var current_button_text = jQuery('.woocommerce-checkout-payment #place_order').val();
-				        if(jQuery('#payment_method_myceliumgear').prop('checked')){
-										jQuery(".woocommerce-checkout-payment #place_order").val("Proceed To Mycelium Gear");
-				        }
-				    });
-					});
-			</script>
-			<?php
+		 	}
 		}
 
 		/**
-		 * Mycellium cancel order
+		 * Mycellium cancel order from gear server
 		 *
 		 * @return void
 		 */
 		public function mycelium_order_cancel($gear_order_id){
 			$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
 			$mycelium_cancel_order = $mycelium_gear->cancel_order($gear_order_id);
-
 		}
 
 		/**
@@ -228,23 +226,14 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 						//If call back order ID and woo order id and order cancelled
 						if(($woo_order_id !== '') && ($mycelium_check_order['status'] == 6)){
 							$woo_order = new WC_Order( $woo_order_id );
-
 							$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
 							$mycelium_order = $mycelium_gear->cancel_order($gear_order_id);
-							//$new_status = 'wc-on-hold';
-							//$note = __('Mycelium gear payment was canceled.', 'woo-mycelium-gear');
-							//$woo_order->update_status( $new_status, $note);
 							$woo_order->add_order_note( __('Mycelium gear payment was canceled.', 'woo-mycelium-gear') );
 						}
 
-
 				}//if have order status
 
-
-
 			}
-
-			///echo 'Yes, I am alive...';
 
 		}
 
@@ -265,11 +254,11 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 			//woocommerce store order id
 			$callback_data = 'wooorderid_'.$order_id;
 
+			//time() added here after order id to make order ID unique or no duplicate
 			$gear_order_id = $order_id + time();
 
 			$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
 			$mycelium_order = $mycelium_gear->create_order($order_total, $gear_order_id, $callback_data);
-			//$order = $geary->check_order($payment_id);
 
 			if ($mycelium_order->payment_id) {
 				// Mark as on-hold (we're awaiting shop manager approval)

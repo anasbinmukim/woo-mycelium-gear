@@ -87,13 +87,13 @@ class WC_Mycelium_Gear_API {
     public function cancel_order($id) {
         $request = $this->endpoint('orders');
 
-    	$data = array(
-            'request_uri' => $request,
-            'request_method' => 'POST',
-            'params' => "$id/cancel"
-    	);
+      	$data = array(
+              'request_uri' => $request,
+              'request_method' => 'POST',
+              'params' => "$id/cancel"
+      	);
 
-    	return $this->send_signed_request($data);
+      	return $this->send_signed_request($data);
     }
 
     /**
@@ -106,14 +106,13 @@ class WC_Mycelium_Gear_API {
     */
     public function check_order($payment_id) {
         $request_uri = $this->endpoint('orders');
+      	$data = array(
+              'request_uri' => $request_uri,
+              'request_method' => 'GET',
+              'params' => $payment_id
+      	);
 
-    	$data = array(
-            'request_uri' => $request_uri,
-            'request_method' => 'GET',
-            'params' => $payment_id
-    	);
-
-    	return $this->send_signed_request($data);
+      	return $this->send_signed_request($data);
     }
 
     /**
@@ -177,13 +176,13 @@ class WC_Mycelium_Gear_API {
     public function get_last_keychain_id() {
         $request_uri = $this->endpoint('last_keychain_id');
 
-    	$data = array(
-            'request_uri' => $request_uri,
-            'request_method' => 'GET',
-            'params' => NULL
-    	);
+      	$data = array(
+              'request_uri' => $request_uri,
+              'request_method' => 'GET',
+              'params' => NULL
+      	);
 
-    	return $this->send_signed_request($data);
+      	return $this->send_signed_request($data);
     }
 
     /**

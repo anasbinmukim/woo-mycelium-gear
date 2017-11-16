@@ -1,13 +1,15 @@
 <?php
 /*
 Plugin Name: WooCommerce Mycelium Gear
-Plugin URI: http://plugins.rmweblab.com/
+Plugin URI: http://plugins.rmweblab.com/woo-mycelium-gear
 Description: WooCommerce Mycelium Gear Payment Gateway Extends WooCommerce Payment Gateway allow customer to pay using mycelium gear.
 Author: Anas
 Version: 1.0
 Author URI: http://rmweblab.com
 Text Domain: woo-mycelium-gear
 Domain Path: /languages
+WC tested up to: 3.2.3
+WC requires at least: 3.2.3
 
 Copyright: © 2017 RMWebLab.
 License: GNU General Public License v3.0
@@ -100,7 +102,7 @@ class WC_MyceliumGear {
 	 */
 	function process_mycelium_order_init(){
 		$mycelium_gateway = new WC_Gateway_MyceliumGear();
-		$mycelium_gateway->process_mycelium_order();
+		$mycelium_gateway->process_mycelium_order();		
 	}
 
 	/**
