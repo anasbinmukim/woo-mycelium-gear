@@ -219,7 +219,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 						if(($woo_order_id !== '') && ($mycelium_check_order['status'] == 2)){
 							$woo_order = new WC_Order( $woo_order_id );
 							if($woo_order->payment_complete()){
-									$woo_order->add_order_note( __('Mycelium gear payment completed', 'woo-mycelium-gear') );
+									//$woo_order->add_order_note( __('Mycelium gear payment completed', 'woo-mycelium-gear') );
 							}
 						}
 
@@ -228,7 +228,7 @@ class WC_Gateway_MyceliumGear extends WC_Payment_Gateway {
 							$woo_order = new WC_Order( $woo_order_id );
 							$mycelium_gear = new WC_Mycelium_Gear_API($this->gateway_id, $this->gateway_secret);
 							$mycelium_order = $mycelium_gear->cancel_order($gear_order_id);
-							$woo_order->add_order_note( __('Mycelium gear payment was canceled.', 'woo-mycelium-gear') );
+							//$woo_order->add_order_note( __('Mycelium gear payment was canceled.', 'woo-mycelium-gear') );
 						}
 
 				}//if have order status
