@@ -43,6 +43,9 @@ Yes, Mycelium server order will automatically cancel when order cancel from your
 
 == Changelog ==
 
+= 1.1 =
+* Error fix for kitchen ID
+
 = 1.0 =
 * Initial development.
 
